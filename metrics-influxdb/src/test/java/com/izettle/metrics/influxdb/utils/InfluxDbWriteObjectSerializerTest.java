@@ -55,10 +55,8 @@ public class InfluxDbWriteObjectSerializerTest {
     public void shouldSerializeUsingLineProtocol() {
         Map<String, String> tags = new HashMap<String, String>();
         tags.put("tag1Key", "tag1Value");
-        tags.put("tag2Key", "tag2Value");
         Map<String, Object> fields = new HashMap<String, Object>();
         fields.put("field1Key", "field1Value");
-        fields.put("field2Key", "field2Value");
         InfluxDbPoint point1 = new InfluxDbPoint("measurement1", tags, "123", fields);
         Set<InfluxDbPoint> set = new HashSet<InfluxDbPoint>();
         set.add(point1);
@@ -67,12 +65,12 @@ public class InfluxDbWriteObjectSerializerTest {
         InfluxDbWriteObjectSerializer influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer();
         String lineString = influxDbWriteObjectSerializer.getLineProtocolString(influxDbWriteObject);
         assertThat(lineString).isEqualTo(
-            "measurement1,tag1Key=tag1Value,tag2Key=tag2Value field1Key=\"field1Value\",field2Key=\"field2Value\" 123000000\n");
+            "measurement1,tag1Key=tag1Value field1Key=\"field1Value\" 123000000\n");
         InfluxDbPoint point2 = new InfluxDbPoint("measurement1", tags, "123", fields);
         set.add(point2);
         lineString = influxDbWriteObjectSerializer.getLineProtocolString(influxDbWriteObject);
         assertThat(lineString).isEqualTo(
-            "measurement1,tag1Key=tag1Value,tag2Key=tag2Value field1Key=\"field1Value\",field2Key=\"field2Value\" 123000000\n"
-                + "measurement1,tag1Key=tag1Value,tag2Key=tag2Value field1Key=\"field1Value\",field2Key=\"field2Value\" 123000000\n");
+            "measurement1,tag1Key=tag1Value field1Key=\"field1Value\" 123000000\n"
+                + "measurement1,tag1Key=tag1Value field1Key=\"field1Value\" 123000000\n");
     }
 }
