@@ -7,8 +7,6 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.google.common.escape.Escaper;
-import com.google.common.escape.Escapers;
 import com.izettle.metrics.influxdb.data.InfluxDbPoint;
 import com.izettle.metrics.influxdb.data.InfluxDbWriteObject;
 import java.io.IOException;
@@ -18,13 +16,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class InfluxDbWriteObjectSerializer {
-
-    private static final Escaper FIELD_ESCAPER = Escapers.builder().addEscape('"', "\\\"").build();
-    private static final Escaper KEY_ESCAPER = Escapers.builder()
-        .addEscape(' ', "\\ ")
-        .addEscape(',', "\\,")
-        .addEscape('=', "\\=")
-        .build();
 
     protected static class MapSerializer<P, Q> extends JsonSerializer<Map<P, Q>> {
         @Override
@@ -76,7 +67,7 @@ public class InfluxDbWriteObjectSerializer {
 
     public String lineProtocol(InfluxDbPoint point) {
         final StringBuilder sb = new StringBuilder();
-        sb.append(KEY_ESCAPER.escape(point.getMeasurement()));
+        sb.append(escapeKey(point.getMeasurement()));
         sb.append(concatenatedTags(point.getTags()));
         sb.append(concatenateFields(point.getFields()));
         sb.append(formattedTime(Long.valueOf(point.getTimestamp())));
@@ -87,7 +78,7 @@ public class InfluxDbWriteObjectSerializer {
         final StringBuilder sb = new StringBuilder();
         for (Map.Entry<String, String> tag : tags.entrySet()) {
             sb.append(",");
-            sb.append(KEY_ESCAPER.escape(tag.getKey())).append("=").append(KEY_ESCAPER.escape(tag.getValue()));
+            sb.append(escapeKey(tag.getKey())).append("=").append(escapeKey(tag.getValue()));
         }
         sb.append(" ");
         return sb;
@@ -104,12 +95,12 @@ public class InfluxDbWriteObjectSerializer {
         numberFormat.setMinimumFractionDigits(1);
 
         for (Map.Entry<String, Object> field : fields.entrySet()) {
-            sb.append(KEY_ESCAPER.escape(field.getKey())).append("=");
+            sb.append(escapeKey(field.getKey())).append("=");
             loops++;
             Object value = field.getValue();
             if (value instanceof String) {
                 String stringValue = (String) value;
-                sb.append("\"").append(FIELD_ESCAPER.escape(stringValue)).append("\"");
+                sb.append("\"").append(escapeField(stringValue)).append("\"");
             } else if (value instanceof Number) {
                 sb.append(numberFormat.format(value));
             } else {
@@ -130,5 +121,15 @@ public class InfluxDbWriteObjectSerializer {
         }
         sb.append(" ").append(TimeUnit.NANOSECONDS.convert(time, TimeUnit.MILLISECONDS));
         return sb;
+    }
+
+    private String escapeField(String field) {
+        return field.replaceAll(" ", "\\ ")
+            .replaceAll(",", "\\,")
+            .replaceAll("=", "\\=");
+    }
+
+    private String escapeKey(String key) {
+        return key.replaceAll("\"", "\\\"");
     }
 }
