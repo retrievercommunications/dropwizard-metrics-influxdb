@@ -79,7 +79,7 @@ public class InfluxDbWriteObjectSerializer {
         sb.append(KEY_ESCAPER.escape(point.getMeasurement()));
         sb.append(concatenatedTags(point.getTags()));
         sb.append(concatenateFields(point.getFields()));
-        sb.append(formatedTime(Long.valueOf(point.getTimestamp())));
+        sb.append(formattedTime(Long.valueOf(point.getTimestamp())));
         return sb.toString();
     }
 
@@ -123,7 +123,7 @@ public class InfluxDbWriteObjectSerializer {
         return sb;
     }
 
-    private StringBuilder formatedTime(Long time) {
+    private StringBuilder formattedTime(Long time) {
         final StringBuilder sb = new StringBuilder();
         if (null == time) {
             time = System.nanoTime();
