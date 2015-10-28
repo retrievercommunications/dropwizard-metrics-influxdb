@@ -68,7 +68,7 @@ public class InfluxDbHttpSender implements InfluxDbSender {
 
     @Override
     public int writeData() throws Exception {
-        final String json = influxDbWriteObjectSerializer.getJsonString(influxDbWriteObject);
+        final String line = influxDbWriteObjectSerializer.getLineProtocolString(influxDbWriteObject);
         final HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("POST");
         if (authStringEncoded != null && !authStringEncoded.isEmpty()) {
@@ -80,7 +80,7 @@ public class InfluxDbHttpSender implements InfluxDbSender {
 
         OutputStream out = con.getOutputStream();
         try {
-            out.write(json.getBytes(UTF_8));
+            out.write(line.getBytes(UTF_8));
             out.flush();
         } finally {
             if (out != null) out.close();

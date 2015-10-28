@@ -1,15 +1,7 @@
 package com.izettle.metrics.influxdb.utils;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.izettle.metrics.influxdb.data.InfluxDbPoint;
 import com.izettle.metrics.influxdb.data.InfluxDbWriteObject;
-import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.Map;
@@ -17,39 +9,6 @@ import java.util.concurrent.TimeUnit;
 
 public class InfluxDbWriteObjectSerializer {
 
-    protected static class MapSerializer<P, Q> extends JsonSerializer<Map<P, Q>> {
-        @Override
-        public void serialize(
-            final Map<P, Q> influxDbMap,
-            final JsonGenerator jsonGenerator,
-            final SerializerProvider provider)
-            throws IOException {
-            if (influxDbMap != null) {
-                jsonGenerator.writeStartObject();
-                for (Map.Entry<P, Q> entry : influxDbMap.entrySet()) {
-                    jsonGenerator.writeFieldName(entry.getKey().toString());
-                    jsonGenerator.writeObject(entry.getValue());
-                }
-                jsonGenerator.writeEndObject();
-            }
-        }
-    }
-
-    private final ObjectMapper objectMapper;
-
-    public InfluxDbWriteObjectSerializer() {
-        objectMapper = new ObjectMapper();
-        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
-
-        final SimpleModule module = new SimpleModule("SimpleModule", new Version(1, 0, 0, null, null, null));
-        module.addSerializer(Map.class, new MapSerializer());
-        objectMapper.registerModule(module);
-    }
-
-    @Deprecated
-    public String getJsonString(InfluxDbWriteObject influxDbWriteObject) throws Exception {
-        return objectMapper.writeValueAsString(influxDbWriteObject);
-    }
     // measurement[,tag=value,tag2=value2...] field=value[,field2=value2...] [unixnano]
 
     /**
