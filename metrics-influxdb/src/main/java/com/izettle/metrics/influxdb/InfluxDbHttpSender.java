@@ -19,7 +19,7 @@ import org.apache.commons.codec.binary.Base64;
  */
 public class InfluxDbHttpSender implements InfluxDbSender {
     private static final Charset UTF_8 = StandardCharsets.UTF_8;
-    private final URL url;
+    private URL url;
     // The base64 encoded authString.
     private final String authStringEncoded;
     private final InfluxDbWriteObject influxDbWriteObject;
@@ -35,9 +35,11 @@ public class InfluxDbHttpSender implements InfluxDbSender {
      * @param timePrecision the time precision of the metrics
      * @throws Exception exception while creating the influxDb sender(MalformedURLException)
      */
-    public InfluxDbHttpSender(final String protocol, final String hostname, final int port, final String database, final String authString,
-                              final TimeUnit timePrecision) throws Exception {
+    public InfluxDbHttpSender(
+        final String protocol, final String hostname, final int port, final String database, final String authString,
+        final TimeUnit timePrecision) throws Exception {
         this.url = new URL(protocol, hostname, port, "/write");
+        this.url = new URL(url.toString() + "?db=" + database);
 
         if (authString != null && !authString.isEmpty()) {
             this.authStringEncoded = Base64.encodeBase64String(authString.getBytes(UTF_8));
@@ -83,14 +85,16 @@ public class InfluxDbHttpSender implements InfluxDbSender {
             out.write(line.getBytes(UTF_8));
             out.flush();
         } finally {
-            if (out != null) out.close();
+            if (out != null)
+                out.close();
         }
 
         int responseCode = con.getResponseCode();
 
         // Check if non 2XX response code.
         if (responseCode / 100 != 2) {
-            throw new IOException("Server returned HTTP response code: " + responseCode + " for URL: " + url + " with content :'"
+            throw new IOException(
+                "Server returned HTTP response code: " + responseCode + " for URL: " + url + " with content :'"
                     + con.getResponseMessage() + "'");
         }
         return responseCode;
@@ -101,5 +105,10 @@ public class InfluxDbHttpSender implements InfluxDbSender {
         if (tags != null) {
             influxDbWriteObject.setTags(tags);
         }
+    }
+
+    @Override
+    public Map<String, String> getTags() {
+        return influxDbWriteObject.getTags();
     }
 }

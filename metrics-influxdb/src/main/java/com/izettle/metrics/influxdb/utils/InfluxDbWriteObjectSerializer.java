@@ -19,17 +19,17 @@ public class InfluxDbWriteObjectSerializer {
     public String getLineProtocolString(InfluxDbWriteObject influxDbWriteObject) {
         StringBuilder sb = new StringBuilder();
         for (InfluxDbPoint point : influxDbWriteObject.getPoints()) {
-            sb.append(lineProtocol(point)).append("\n");
+            sb.append(lineProtocol(point, influxDbWriteObject.getPrecision())).append("\n");
         }
         return sb.toString();
     }
 
-    public String lineProtocol(InfluxDbPoint point) {
+    public String lineProtocol(InfluxDbPoint point, TimeUnit precision) {
         final StringBuilder sb = new StringBuilder();
         sb.append(escapeKey(point.getMeasurement()));
         sb.append(concatenatedTags(point.getTags()));
         sb.append(concatenateFields(point.getFields()));
-        sb.append(formattedTime(Long.valueOf(point.getTimestamp())));
+        sb.append(formattedTime(point.getTime(), precision));
         return sb.toString();
     }
 
@@ -73,12 +73,12 @@ public class InfluxDbWriteObjectSerializer {
         return sb;
     }
 
-    private StringBuilder formattedTime(Long time) {
+    private StringBuilder formattedTime(Long time, TimeUnit precision) {
         final StringBuilder sb = new StringBuilder();
         if (null == time) {
             time = System.nanoTime();
         }
-        sb.append(" ").append(TimeUnit.NANOSECONDS.convert(time, TimeUnit.MILLISECONDS));
+        sb.append(" ").append(TimeUnit.NANOSECONDS.convert(precision.convert(time, TimeUnit.MILLISECONDS), precision));
         return sb;
     }
 
