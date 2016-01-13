@@ -9,10 +9,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import org.apache.commons.codec.binary.Base64;
 
 /**
  * An implementation of InfluxDbSender that writes to InfluxDb via http.
@@ -40,7 +40,7 @@ public class InfluxDbHttpSender implements InfluxDbSender {
         this.url = new URL(protocol, hostname, port, "/write");
 
         if (authString != null && !authString.isEmpty()) {
-            this.authStringEncoded = Base64.encodeBase64String(authString.getBytes(UTF_8));
+            this.authStringEncoded = Base64.getEncoder().encodeToString(authString.getBytes(UTF_8));
         } else {
             this.authStringEncoded = "";
         }
