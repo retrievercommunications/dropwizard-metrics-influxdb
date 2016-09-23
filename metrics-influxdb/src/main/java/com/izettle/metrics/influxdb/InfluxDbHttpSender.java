@@ -6,8 +6,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.Base64;
 import java.util.concurrent.TimeUnit;
-import org.apache.commons.codec.binary.Base64;
 
 /**
  * An implementation of InfluxDbSender that writes to InfluxDb via http.
@@ -44,7 +44,7 @@ public class InfluxDbHttpSender extends InfluxDbBaseSender {
         this.url = new URL(endpoint + "?" + queryDb + "&" + queryPrecision);
 
         if (authString != null && !authString.isEmpty()) {
-            this.authStringEncoded = Base64.encodeBase64String(authString.getBytes(UTF_8));
+            this.authStringEncoded = Base64.getEncoder().encodeToString(authString.getBytes(UTF_8));
         } else {
             this.authStringEncoded = "";
         }
