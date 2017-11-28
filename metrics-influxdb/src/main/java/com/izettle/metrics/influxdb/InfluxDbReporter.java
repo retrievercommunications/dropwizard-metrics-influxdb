@@ -1,17 +1,5 @@
 package com.izettle.metrics.influxdb;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Counting;
-import com.codahale.metrics.Gauge;
-import com.codahale.metrics.Histogram;
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.Metered;
-import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.ScheduledReporter;
-import com.codahale.metrics.Snapshot;
-import com.codahale.metrics.Timer;
-import com.izettle.metrics.influxdb.data.InfluxDbPoint;
 import java.net.ConnectException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,6 +12,18 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Counting;
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.Metered;
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ScheduledReporter;
+import com.codahale.metrics.Snapshot;
+import com.codahale.metrics.Timer;
+import com.izettle.metrics.influxdb.data.InfluxDbPoint;
 
 public final class InfluxDbReporter extends ScheduledReporter {
     public static class Builder {
@@ -36,6 +36,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         private boolean groupGauges;
         private Set<String> includeTimerFields;
         private Set<String> includeMeterFields;
+        private Set<String> includeHistogramFields;
         private Map<String, Pattern> measurementMappings;
 
         private Builder(MetricRegistry registry) {
@@ -136,6 +137,17 @@ public final class InfluxDbReporter extends ScheduledReporter {
             this.includeMeterFields = fields;
             return this;
         }
+        
+        /**
+         * Only report histogram fields in the set.
+         *
+         * @param fields Fields to include.
+         * @return {@code this}
+         */
+        public Builder includeHistogramFields(Set<String> fields) {
+            this.includeHistogramFields = fields;
+            return this;
+        }
 
         /**
          * Map measurement to a defined measurement name, where the key is the measurement name
@@ -163,7 +175,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         public InfluxDbReporter build(final InfluxDbSender influxDb) {
             return new InfluxDbReporter(
                 registry, influxDb, tags, rateUnit, durationUnit, filter, skipIdleMetrics,
-                groupGauges, includeTimerFields, includeMeterFields, measurementMappings
+                groupGauges, includeTimerFields, includeMeterFields, includeHistogramFields, measurementMappings
             );
         }
     }
@@ -175,6 +187,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
     private final boolean groupGauges;
     private final Set<String> includeTimerFields;
     private final Set<String> includeMeterFields;
+    private final Set<String> includeHistogramFields;
     private final Map<String, Pattern> measurementMappings;
 
     private InfluxDbReporter(
@@ -188,6 +201,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         final boolean groupGauges,
         final Set<String> includeTimerFields,
         final Set<String> includeMeterFields,
+        final Set<String> includeHistogramFields,
         final Map<String, Pattern> measurementMappings
     ) {
         super(registry, "influxDb-reporter", filter, rateUnit, durationUnit);
@@ -197,6 +211,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         this.groupGauges = groupGauges;
         this.includeTimerFields = includeTimerFields;
         this.includeMeterFields = includeMeterFields;
+        this.includeHistogramFields = includeHistogramFields;
         this.previousValues = new TreeMap<String, Long>();
         this.measurementMappings =
             measurementMappings == null ? Collections.<String, Pattern>emptyMap() : measurementMappings;
@@ -381,6 +396,10 @@ public final class InfluxDbReporter extends ScheduledReporter {
         fields.put("p99", snapshot.get99thPercentile());
         fields.put("p999", snapshot.get999thPercentile());
 
+        if (includeHistogramFields != null) {
+            fields.keySet().retainAll(includeHistogramFields);
+        }
+        
         Map<String, String> tags = new HashMap<String, String>();
         tags.putAll(influxDb.getTags());
         tags.put("metricName", name);

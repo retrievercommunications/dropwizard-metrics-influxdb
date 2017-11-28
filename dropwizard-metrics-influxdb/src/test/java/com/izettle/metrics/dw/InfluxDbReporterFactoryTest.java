@@ -4,7 +4,15 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-
+import java.net.URL;
+import java.util.Base64;
+import java.util.Map;
+import java.util.Set;
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
+import org.apache.commons.lang3.reflect.FieldUtils;
+import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
 import com.izettle.metrics.influxdb.InfluxDbHttpSender;
@@ -13,15 +21,6 @@ import com.izettle.metrics.influxdb.InfluxDbTcpSender;
 import com.izettle.metrics.influxdb.InfluxDbUdpSender;
 import io.dropwizard.jackson.DiscoverableSubtypeResolver;
 import io.dropwizard.validation.BaseValidator;
-import java.net.URL;
-import java.util.Map;
-import java.util.Set;
-import javax.validation.ConstraintViolation;
-import javax.validation.Validator;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang3.reflect.FieldUtils;
-import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 
 public class InfluxDbReporterFactoryTest {
 
@@ -63,7 +62,7 @@ public class InfluxDbReporterFactoryTest {
             getField(
                 influxDb,
                 InfluxDbHttpSender.class,
-                "authStringEncoded")).isEqualTo(Base64.encodeBase64String("".getBytes(UTF_8)));
+                "authStringEncoded")).isEqualTo(Base64.getEncoder().encodeToString("".getBytes(UTF_8)));
     }
 
     private static Object getField(Object object, Class clazz, String name) {
